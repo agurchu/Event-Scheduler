@@ -4,6 +4,9 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout code
@@ -14,9 +17,24 @@ jobs:
         with:
          distribution: temurin
          java-version: 21
+
       - name: Compile
         run: mvn -B clean compile
 
       - name: Run tests
         run: mvn -B test
+
+      - name: Log in to Github Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{secrets.GITHUB_TOKEN}}
+
+      - name: Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{github.repository_owner}}/user-manager:lastest
 
